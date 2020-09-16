@@ -1,0 +1,44 @@
+{
+  "indices_boost": [
+    { "menus-ee": 2 },
+    { "menus-en": 2 }
+  ],
+  "sort" : [
+    { "menuDate" : {"order" : "desc"}},
+    {
+      "_geo_distance" : {
+        "location.geoPoint" : [-70, 40],
+        "order" : "asc",
+        "unit" : "km",
+        "mode" : "min",
+        "distance_type" : "sloppy_arc"
+      }
+    }
+  ],
+  "query": {
+    "bool": {
+      "must": {
+        "multi_match": {
+          "query": "this is a test",
+          "fields": ["menuText^3", "businessProfile.businessName"]
+        }
+      },
+      "filter" : {
+        "geo_distance" : {
+          "distance" : "200km",
+          "location.geoPoint" : {
+            "lat" : 40,
+            "lon" : -70
+          }
+        },
+        "range" : {
+          "menuDate" : {
+            "time_zone": "+01:00",
+            "gte": "2015-01-01 00:00:00",
+            "lte": "now"
+          }
+        }
+      }
+    }
+  }
+}

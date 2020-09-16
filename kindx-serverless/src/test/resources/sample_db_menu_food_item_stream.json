@@ -1,0 +1,146 @@
+{
+  "Records": [
+    {
+      "eventID": "1",
+      "eventName": "INSERT",
+      "eventVersion": "1.0",
+      "eventSource": "aws:dynamodb",
+      "awsRegion": "{region}",
+      "dynamodb": {
+        "Keys": {
+          "Id": {
+            "N": "1"
+          }
+        },
+        "NewImage": {
+          "menu_id": {
+            "S": "FB_11111_1111_1111"
+          },
+          "system_name": {
+            "S": "chicken_soup"
+          },
+          "name": {
+            "S": "Chicken Soup"
+          },
+          "user_id": {
+            "S": "U1111111111113"
+          },
+          "updated_timestamp": {
+            "N": "1565206179948"
+          }
+        },
+        "SequenceNumber": "222",
+        "SizeBytes": 59,
+        "StreamViewType": "NEW_AND_OLD_IMAGES"
+      },
+      "eventSourceARN": "arn:aws:dynamodb:us-east-1:431892529619:table/kitchens/stream/2019-08-07T19:40:39.101"
+    },
+    {
+      "eventID": "2",
+      "eventName": "INSERT",
+      "eventVersion": "1.0",
+      "eventSource": "aws:dynamodb",
+      "awsRegion": "{region}",
+      "dynamodb": {
+        "Keys": {
+          "Id": {
+            "N": "1"
+          }
+        },
+        "NewImage": {
+          "menu_id": {
+            "S": "FB_21111_1111_1111"
+          },
+          "system_name": {
+            "S": "chicken_soup"
+          },
+          "user_id": {
+            "S": "U1111111111113"
+          },
+          "name": {
+            "S": "chicken soup"
+          },
+          "updated_timestamp": {
+            "N": "1565206179948"
+          }
+        },
+        "SequenceNumber": "222",
+        "SizeBytes": 59,
+        "StreamViewType": "NEW_AND_OLD_IMAGES"
+      },
+      "eventSourceARN": "arn:aws:dynamodb:us-east-1:431892529619:table/kitchens/stream/2019-08-07T19:40:39.101"
+    },
+    {
+      "eventID": "3",
+      "eventName": "INSERT",
+      "eventVersion": "1.0",
+      "eventSource": "aws:dynamodb",
+      "awsRegion": "{region}",
+      "dynamodb": {
+        "Keys": {
+          "Id": {
+            "N": "1"
+          }
+        },
+        "NewImage": {
+          "menu_id": {
+            "S": "FB_11111_1111_1111"
+          },
+          "system_name": {
+            "S": "kanasnitsel"
+          },
+          "name": {
+            "S": "Kanasnitsel"
+          },
+          "user_id": {
+            "S": "U1111111111112"
+          },
+          "updated_timestamp": {
+            "N": "1565206179948"
+          }
+        },
+        "SequenceNumber": "222",
+        "SizeBytes": 59,
+        "StreamViewType": "NEW_AND_OLD_IMAGES"
+      },
+
+      "eventSourceARN": "arn:aws:dynamodb:us-east-1:431892529619:table/kitchens/stream/2019-08-07T19:40:39.101"
+    },
+    {
+      "eventID": "4",
+      "eventName": "INSERT",
+      "eventVersion": "1.0",
+      "eventSource": "aws:dynamodb",
+      "awsRegion": "{region}",
+      "dynamodb": {
+        "Keys": {
+          "Id": {
+            "N": "1"
+          }
+        },
+        "NewImage": {
+          "menu_id": {
+            "S": "FB_11111_1111_1111"
+          },
+          "system_name": {
+            "S": "kanasnitsel"
+          },
+          "name": {
+            "S": "Kanašnitsel"
+          },
+          "user_id": {
+            "S": "U1111111111113"
+          },
+          "updated_timestamp": {
+            "N": "1565206179948"
+          }
+        },
+        "SequenceNumber": "222",
+        "SizeBytes": 59,
+        "StreamViewType": "NEW_AND_OLD_IMAGES"
+      },
+
+      "eventSourceARN": "arn:aws:dynamodb:us-east-1:431892529619:table/kitchens/stream/2019-08-07T19:40:39.101"
+    }
+  ]
+}

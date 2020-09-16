@@ -1,0 +1,65 @@
+{
+  "TableName": "kitchens",
+  "AttributeDefinitions": [
+    {
+      "AttributeName": "kitchen_id",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "facebook_id",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "google_places_id",
+      "AttributeType": "S"
+    }
+  ],
+  "KeySchema": [
+    {
+      "AttributeName": "kitchen_id",
+      "KeyType": "HASH"
+    }
+  ],
+  "ProvisionedThroughput": {
+    "WriteCapacityUnits": 25,
+    "ReadCapacityUnits": 25
+  },
+  "StreamSpecification": {
+    "StreamEnabled": true,
+    "StreamViewType": "NEW_AND_OLD_IMAGES"
+  },
+  "GlobalSecondaryIndexes": [
+    {
+      "IndexName": "kitchens.facebook_id.index",
+      "KeySchema": [
+        {
+          "AttributeName": "facebook_id",
+          "KeyType": "HASH"
+        }
+      ],
+      "Projection": {
+        "ProjectionType": "ALL"
+      },
+      "ProvisionedThroughput": {
+        "ReadCapacityUnits": 10,
+        "WriteCapacityUnits": 10
+      }
+    },
+    {
+      "IndexName": "kitchens.google_places_id.index",
+      "KeySchema": [
+        {
+          "AttributeName": "google_places_id",
+          "KeyType": "HASH"
+        }
+      ],
+      "Projection": {
+        "ProjectionType": "ALL"
+      },
+      "ProvisionedThroughput": {
+        "ReadCapacityUnits": 10,
+        "WriteCapacityUnits": 10
+      }
+    }
+  ]
+}

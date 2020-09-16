@@ -1,0 +1,10 @@
+{
+  "mappings": {
+    "properties": {
+      "geoPoint": {"type": "geo_point"},
+      "createdTimestamp": {
+        "type": "date"
+      }
+    }
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "RequestItems": {
+    "kitchen_configurations": [
+      {
+        "PutRequest": {
+          "Item": {
+            "kitchen_id": {"S": "FB_112134816798002"},
+            "created_timestamp": {"N": "1530000000"},
+            "is_disabled": {"N": "0"},
+            "brute_force_fallback": {"N": "0"},
+            "ignore_stop_words": {"N": "1"},
+            "line_delimiter_regex": {"S": "\\n"},
+            "word_delimiter_regex": {"S": "\\s|,"},
+            "languages": {"SS": ["en_GB", "et_EE"]},
+            "default_menus": {
+              "SS": []
+            },
+            "filter_expression_type": {"S": "GROOVY"},
+            "menu_filter_expression": {"S": "text.contains('kutsume sind') && text.contains('welcoming you for lunch')"}
+          }
+        }
+      },
+      {
+        "PutRequest": {
+          "Item": {
+            "brute_force_fallback": {
+              "N": "1"
+            },
+            "created_timestamp": {
+              "N": "1573375083888"
+            },
+            "ignore_stop_words": {
+              "N": "0"
+            },
+            "is_disabled": {
+              "N": "0"
+            },
+            "kitchen_id": {
+              "S": "FB_100736274726023"
+            },
+            "languages": {
+              "SS": [
+                "SWEDISH"
+              ]
+            },
+            "default_menus": {
+              "SS": []
+            },
+            "line_delimiter_regex": {
+              "S": "\n"
+            },
+            "menu_signature_text": {
+              "S": "lilla ego"
+            },
+            "version": {
+              "N": "1"
+            },
+            "word_delimiter_regex": {
+              "S": "\\s|, "
+            }
+          }
+        }
+      },
+      {
+        "PutRequest": {
+          "Item": {
+            "brute_force_fallback": {
+              "N": "1"
+            },
+            "created_timestamp": {
+              "N": "1573374939907"
+            },
+            "ignore_stop_words": {
+              "N": "0"
+            },
+            "is_disabled": {
+              "N": "0"
+            },
+            "kitchen_id": {
+              "S": "FB_115449079899568"
+            },
+            "languages": {
+              "SS": [
+                "ENGLISH",
+                "FINNISH"
+              ]
+            },
+            "default_menus": {
+              "SS": []
+            },
+            "line_delimiter_regex": {
+              "S": "\n"
+            },
+            "menu_signature_text": {
+              "S": "pariisi-menu"
+            },
+            "version": {
+              "N": "1"
+            },
+            "word_delimiter_regex": {
+              "S": "\\s|, "
+            }
+          }
+        }
+      }
+    ]
+  }
+}

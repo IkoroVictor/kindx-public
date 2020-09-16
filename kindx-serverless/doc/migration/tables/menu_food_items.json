@@ -1,0 +1,57 @@
+{
+  "TableName": "menu_food_items",
+  "AttributeDefinitions": [
+    {
+      "AttributeName": "menu_id",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "user_id",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "user_id_name",
+      "AttributeType": "S"
+    }
+  ],
+  "KeySchema": [
+    {
+      "AttributeName": "menu_id",
+      "KeyType": "HASH"
+    }, {
+      "AttributeName": "user_id_name",
+      "KeyType": "RANGE"
+    }
+  ],
+  "StreamSpecification": {
+    "StreamEnabled": true,
+    "StreamViewType": "NEW_IMAGE"
+  },
+  "ProvisionedThroughput": {
+    "WriteCapacityUnits": 25,
+    "ReadCapacityUnits": 25
+  },
+  "GlobalSecondaryIndexes": [
+    {
+      "IndexName": "menu_food_items.user_id-menu_id-system_name.index",
+      "KeySchema": [
+        {
+          "AttributeName": "user_id",
+          "KeyType": "HASH"
+        },
+        {
+          "AttributeName": "menu_id",
+          "KeyType": "RANGE"
+        }
+      ],
+      "Projection": {
+        "NonKeyAttributes": [ "system_name" ],
+        "ProjectionType": "INCLUDE"
+      },
+      "ProvisionedThroughput": {
+        "ReadCapacityUnits": 10,
+        "WriteCapacityUnits": 10
+      }
+    }
+  ]
+}

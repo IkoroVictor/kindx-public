@@ -1,0 +1,48 @@
+{
+  "TableName": "menu_geo_hashes",
+  "AttributeDefinitions": [
+    {
+      "AttributeName": "hash_key",
+      "AttributeType": "N"
+    }, {
+      "AttributeName": "menu_id",
+      "AttributeType": "S"
+    }
+  ],
+  "KeySchema": [
+    {
+      "AttributeName": "hash_key",
+      "KeyType": "HASH"
+    }, {
+      "AttributeName": "menu_id",
+      "KeyType": "RANGE"
+    }
+  ],
+  "ProvisionedThroughput": {
+    "WriteCapacityUnits": 25,
+    "ReadCapacityUnits": 25
+  },
+  "StreamSpecification": {
+    "StreamEnabled": true,
+    "StreamViewType": "NEW_AND_OLD_IMAGES"
+  },
+
+  "GlobalSecondaryIndexes": [
+    {
+      "IndexName": "menu_geo_hashes.menu_id.index",
+      "KeySchema": [
+        {
+          "AttributeName": "menu_id",
+          "KeyType": "HASH"
+        }
+      ],
+      "Projection": {
+        "ProjectionType": "KEYS_ONLY"
+      },
+      "ProvisionedThroughput": {
+        "ReadCapacityUnits": 10,
+        "WriteCapacityUnits": 10
+      }
+    }
+  ]
+}

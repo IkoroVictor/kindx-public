@@ -1,0 +1,69 @@
+pipeline {
+    agent { label 'slave-1' }
+    environment {
+      AWS_DEPLOY_REGION   = 'us-east-1'
+      TEST_ELASTIC_SEARCH_HOSTS   = 'https://f6099f86ed3e4f98a698270e263d7151.us-east-1.aws.found.io:9243'
+      TEST_ELASTIC_SEARCH_CREDENTIALS   = credentials('es-cred-tests')
+      ENVIRONMENT = 'stage'
+    }
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        stage('Test') {
+            steps {
+                sh """
+                    export ELASTIC_SEARCH_HOSTS=${TEST_ELASTIC_SEARCH_HOSTS}
+                    export ELASTIC_SEARCH_CREDENTIALS=${TEST_ELASTIC_SEARCH_CREDENTIALS}
+                    gradle clean test -i
+                   """
+            }
+        }
+        stage('Package (Node)') {
+            steps {
+                sh 'cd ./node/app/ && node -v && npm install'
+            }
+        }
+        stage('Package') {
+            steps {
+                sh 'gradle build'
+            }
+        }
+        stage('Deploy') {
+            steps {
+                script {
+                   if (env.BRANCH_NAME == 'master') {
+                      echo "Deploying branch ${env.BRANCH_NAME} to '${ENVIRONMENT}'"
+                      sh """
+                           ./prepare.sh -e ./doc/serverless/env/${ENVIRONMENT}.env -r ${AWS_DEPLOY_REGION}
+                           ./deploy.sh -r ${AWS_DEPLOY_REGION} -s iam-roles
+                           ./deploy.sh -r ${AWS_DEPLOY_REGION} -s table-schemas
+                           ./deploy.sh -r ${AWS_DEPLOY_REGION} -s core-infra
+                           ./deploy.sh -r ${AWS_DEPLOY_REGION} -s core-processors
+                           ./deploy.sh -r ${AWS_DEPLOY_REGION} -s facebook-processors
+                           ./deploy.sh -r ${AWS_DEPLOY_REGION} -s places-processors
+                           ./deploy.sh -r ${AWS_DEPLOY_REGION} -s edge-admin-api
+                           ./deploy.sh -r ${AWS_DEPLOY_REGION} -s edge-front-api
+                         """
+                   } else {
+                       echo "Skipped deployment for ${env.BRANCH_NAME} ........"
+                   }
+                }
+
+            }
+        }
+    }
+    post {
+        success {
+            slackSend color: 'good', message: "*STAGE* :grinning: Successful build. [Job: *${JOB_NAME}*] - [Build: *${BUILD_NUMBER}*] - [Branch: *${BRANCH_NAME}*]"
+        }
+        unstable {
+            slackSend color: '#ffa700', message: "*STAGE* :worried: Build Unstable. [Job: *${JOB_NAME}*] - [Build: *${BUILD_NUMBER}*] - [Branch: *${BRANCH_NAME}*]"
+        }
+        failure {
+            slackSend color: '#ff0000', message: "*STAGE* :skull: Build failed. [Job: *${JOB_NAME}*] - [Build: *${BUILD_NUMBER}*] - [Branch: *${BRANCH_NAME}*]"
+        }
+    }
+}

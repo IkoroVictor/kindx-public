@@ -1,0 +1,280 @@
+swagger: "2.0"
+info:
+  description: "Kitchen Index Front API"
+  version: "1.0.0"
+  title: "Kitchen Index Front API"
+  termsOfService: "http://swagger.io/terms/"
+  contact:
+    email: "support@kiin.io"
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+host: "kiin.io"
+basePath: "/front"
+tags:
+  - name: "users"
+    description: "All User operations"
+    externalDocs:
+      description: "Find out more"
+      url: "http://kiin.io/users"
+  - name: "kitchens"
+    description: "All Kitchen Operations"
+    externalDocs:
+      description: "Find out more about our store"
+      url: "http://kiin.io/kitchens"
+  - name: "menus"
+    description: "All Menu operations"
+    externalDocs:
+      description: "Find out more about our store"
+      url: "http://kiin.io/menus"
+  - name: "webhooks"
+    description: "All Web hooks operations"
+    externalDocs:
+      description: "Find out more about our store"
+      url: "http://kiin.io/webhooks"
+schemes:
+  - "https"
+  - "http"
+paths:
+  /menus/search:
+    post:
+      tags:
+        - "menus"
+      summary: "Search for item in menus"
+      description: ""
+      operationId: "menuSearch"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: "Search menus"
+          required: true
+          schema:
+            $ref: "#/definitions/MenuSearchRequest"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Menu"
+        400:
+          description: "Invalid request."
+      x-amazon-apigateway-integration:
+        httpMethod: POST
+        type: aws_proxy
+        credentials:
+          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/api-gateway-service-role
+        uri:
+          Fn::Sub: arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${MenuApiRequestProcessor.Arn}/invocations
+
+  /menus/today:
+    post:
+      tags:
+        - "menus"
+      summary: "Get Today's menus"
+      description: "Today's Menus"
+      operationId: "menuToday"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: "Get today's menu"
+          required: true
+          schema:
+            $ref: "#/definitions/MenuTodayRequest"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            type: "array"
+            items:
+              $ref: "#/definitions/Menu"
+        400:
+          description: "Invalid request."
+      x-amazon-apigateway-integration:
+        httpMethod: POST
+        type: aws_proxy
+        credentials:
+          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/api-gateway-service-role
+        uri:
+          Fn::Sub: arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${MenuApiRequestProcessor.Arn}/invocations
+  /users/kitchens/{kitchenId}:
+    put:
+      tags:
+        - "users"
+      summary: "Put user kitchen mapping"
+      description: "Creates user kitchen mapping (or replaces if one exists)."
+      operationId: "putUserKitchenMapping"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: "Mapping object"
+          required: true
+          schema:
+            $ref: "#/definitions/UserKitchenMappingCreate"
+      responses:
+        default:
+          description: "successful operation"
+      x-amazon-apigateway-integration:
+        httpMethod: POST
+        type: aws_proxy
+        credentials:
+          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/api-gateway-service-role
+        uri:
+          Fn::Sub: arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UserApiRequestProcessor.Arn}/invocations
+    get:
+      tags:
+        - "users"
+      summary: "Get User kitchen mapping"
+      description: ""
+      operationId: "getUserKitchenMapping"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/UserKitchenMapping"
+        400:
+          description: "Invalid request."
+      x-amazon-apigateway-integration:
+        httpMethod: POST
+        type: aws_proxy
+        credentials:
+          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/api-gateway-service-role
+        uri:
+          Fn::Sub: arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UserApiRequestProcessor.Arn}/invocations
+    delete:
+      tags:
+        - "users"
+      summary: "Delete User kitchen mapping"
+      description: ""
+      operationId: "deleteUserKitchenMapping"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      responses:
+        204:
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/UserKitchenMapping"
+        400:
+          description: "Invalid request."
+      x-amazon-apigateway-integration:
+        httpMethod: POST
+        type: aws_proxy
+        credentials:
+          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/api-gateway-service-role
+        uri:
+          Fn::Sub: arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${UserApiRequestProcessor.Arn}/invocations
+
+definitions:
+  UserKitchenMappingCreate:
+    type: "object"
+    properties:
+      shouldNotify:
+        type: boolean
+      preferences:
+        type: array
+        items:
+          type: string
+  UserKitchenMapping:
+    type: "object"
+    properties:
+      userId:
+        type: string
+      kitchenId:
+        type: string
+      shouldNotify:
+        type: boolean
+      preferences:
+        type: array
+        items:
+          type: string
+  MenuFoodItem:
+    type: object
+    properties:
+      name:
+        type: string
+      system_name:
+        type: string
+      hit_count:
+        type: number
+      occurence_count:
+        type: number
+      line:
+        type: string
+      top_score:
+        type: number
+  Menu:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+      body:
+        type: string
+      date:
+        type: string
+        format: 'date-time'
+      kitchen:
+        type: string
+      food_items:
+        type: array
+        items:
+          $ref: '#/definitions/MenuFoodItem'
+  MenuTodayRequest:
+    type: "object"
+    properties:
+      geoPoint:
+        $ref: '#/definitions/GeoPoint'
+      zoneOffsetSeconds:
+        type: "integer"
+      pageSize:
+        type: "integer"
+      pageToken:
+        type: "string"
+
+
+  MenuSearchRequest:
+    type: "object"
+    properties:
+      searchString:
+        type: "string"
+      pageSize:
+        type: "integer"
+      pageToken:
+        type: "string"
+      geoPoint:
+        $ref: '#/definitions/GeoPoint'
+  GeoPoint:
+    type: "object"
+    properties:
+      lat:
+        type: "number"
+      lon:
+        type: "number"
+  ApiResponse:
+    type: "object"
+    properties:
+      code:
+        type: "integer"
+        format: "int32"
+      type:
+        type: "string"
+      message:
+        type: "string"
+externalDocs:
+  description: "Find out more about Swagger"
+  url: "http://swagger.io"

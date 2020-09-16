@@ -1,0 +1,22 @@
+{
+  "payload": {
+    "userChannelIdentity": "whatsapp:+37254578768",
+    "channel": "WHATSAPP",
+    "type": "DAILY_MENU",
+    "locale": "en_GB",
+    "userId": "USR0",
+    "menuId": "FB_112134816798002_118442146167269",
+    "kitchenId": "FB_112134816798002",
+    "kitchenName": "Tallinn Kitchen Demo Page",
+    "menuText": "<Copied>\n\nKallis Sõber,\nkutsume Sind 16.08 lõunale:\n\nVärskekapsasupp 2.20€\nKõrvitsa kreemsupp 1.90€\n-----------------------------\nPraetud heik\nKalkuniliha koorekastmes\nSealiha magushapus kastmes\nHakklihakaste\nKanašnitsel\nSeene risoto\nRatatouille\nVärskekapsa hautis\n\nLisandid: Kartul, Riis, Tatar, Pasta\nSalativalik\n\n100 g = 1,28 EUR\n\nMagustoit 2.00 €\nKook 2.20 €\n\nAllergeenide ja toidukoostise kohta küsi teenindajalt!\n\nDear Friend,\nwe are welcoming You for lunch:\n\nFresh cabbage soup 2.20€\nPumpkin cream soup 1.90€\n-----------------------------\nFried hake\nTurkey meat in cream sauce\nPork meat in sweet and sour sauce\nMinced meat sauce\nChicken schnitsel\nMushroom risoto\nRatatouille\nFresh cabbage stew\n\nAdditives: Potatoes, Rice, Buckwheat, Pasta\nSalad selection\n\n100 g = 1,28 EUR\n\nDessert 2.00 €\nCake 2.20 €\n\nAsk from waiter about allergens and food ingredients!",
+    "menuDate": "2019-08-18T10:59:08.000+0000",
+    "foodItems": [
+      "cabbage stew",
+      "sealiha",
+      "chicken schnitsel"
+    ],
+    "url": "https://facebook.com/tallinn.kitchen.demo/posts/118442146167269"
+  },
+  "messageTimestamp": "2019-09-15T21:04:51.155Z",
+  "id": "MSG-bab099246488441ab426c40b02c53d4e"
+}

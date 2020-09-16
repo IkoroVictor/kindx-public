@@ -1,0 +1,124 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Google Places Processors
+
+Globals:
+  Function:
+    Runtime: java8
+    ReservedConcurrentExecutions: 10
+    Timeout: 30
+    AutoPublishAlias: live
+    DeploymentPreference:
+      Type: ${DEPLOYMENT_PREFERENCE}
+    Environment:
+      Variables:
+        DYNAMODB_SERVICE_URL: !Sub dynamodb.${AWS::Region}.amazonaws.com
+        SQS_SERVICE_URL: !Sub sqs.${AWS::Region}.amazonaws.com
+        ELASTIC_SEARCH_HOSTS: ${ELASTIC_SEARCH_HOSTS}
+        ELASTIC_SEARCH_CREDENTIALS: ${ELASTIC_SEARCH_CREDENTIALS}
+        FACEBOOK_TOKEN: ${FACEBOOK_TOKEN}
+        FACEBOOK_WEBHOOK_VERIFY_TOKEN: ${FACEBOOK_WEBHOOK_VERIFY_TOKEN}
+        GOOGLE_PLACES_API_KEY: ${GOOGLE_PLACES_API_KEY}
+  Api:
+    MethodSettings: [{
+      # Turn on Info logging
+      "LoggingLevel": "INFO",
+      # Enable Metrics
+      "MetricsEnabled": True,
+      # Trace-level Logging
+      "DataTraceEnabled": True,
+      # On all Paths & methods
+      "ResourcePath": "/*",
+      "HttpMethod": "*",
+    }]
+
+Resources:
+  PlacesPollEventTrigger:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Publish Places Poll events
+      CodeUri: s3://${S3_LAMBDA_BUCKET}/${BUILD_FILE_NAME}
+      Handler: io.kindx.backoffice.handler.schedule.PlacesPollEventScheduleHandler
+      MemorySize: ${LAMBDA_MEM_SIZE}
+      Role: !Sub arn:aws:iam::${AWS::AccountId}:role/lambda-access-role
+      Events:
+        PlacesPollEventSchedule:
+          Type: Schedule
+          Properties:
+            Schedule: rate(25 days) #set to daily
+            Name: places-poll-event-schedule-${COMMIT_HASH}
+            Description: Places Poll Event Schedule
+            Enabled: true
+
+  PlacesPollEventTriggerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${PlacesPollEventTrigger}
+
+
+  PlacesPoller:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Process Places poll events
+      CodeUri: s3://${S3_LAMBDA_BUCKET}/${BUILD_FILE_NAME}
+      Handler: io.kindx.backoffice.handler.sqs.PlacesPollEventHandler
+      MemorySize: ${LAMBDA_MEM_SIZE}
+      Role: !Sub arn:aws:iam::${AWS::AccountId}:role/lambda-access-role
+      Events:
+        FacebookPollEvent:
+          Type: SQS
+          Properties:
+            Queue: !Sub arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:PLACES_POLL_EVENTS
+            BatchSize: 1
+            Enabled: true
+
+  PlacesPollerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${PlacesPoller}
+
+  PlacesToKitchenTrigger:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Publishes messages to map place to kitchen
+      CodeUri: s3://${S3_LAMBDA_BUCKET}/${BUILD_FILE_NAME}
+      Handler: io.kindx.backoffice.handler.schedule.PlacesToKitchenEventScheduler
+      MemorySize: ${LAMBDA_MEM_SIZE}
+      Role: !Sub arn:aws:iam::${AWS::AccountId}:role/lambda-access-role
+      Events:
+        PlacesToKitchenSchedule:
+          Type: Schedule
+          Properties:
+            Schedule: rate(2 minutes)
+            Name: places-to-kitchen-schedule-${COMMIT_HASH}
+            Description: PlacesToKitchen Schedule
+            Enabled: true
+
+  PlacesToKitchenTriggerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${PlacesToKitchenTrigger}
+
+
+  PlacesToKitchenProcessor:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Convertes Validated polled places to kitchens
+      CodeUri: s3://${S3_LAMBDA_BUCKET}/${BUILD_FILE_NAME}
+      Handler: io.kindx.backoffice.handler.sqs.PlacesToKitchenHandler
+      MemorySize: ${LAMBDA_MEM_SIZE}
+      Role: !Sub arn:aws:iam::${AWS::AccountId}:role/lambda-access-role
+      Events:
+        PlacesToKitchenEvent:
+          Type: SQS
+          Properties:
+            Queue: !Sub arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:PLACES_TO_KITCHEN
+            BatchSize: 1
+            Enabled: true
+
+  PlacesToKitchenProcessorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${PlacesToKitchenProcessor}
+

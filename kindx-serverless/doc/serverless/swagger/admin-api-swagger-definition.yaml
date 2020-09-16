@@ -1,0 +1,59 @@
+swagger: "2.0"
+info:
+  description: "Kitchen Index Admin API"
+  version: "1.0.0"
+  title: "Kitchen Index Admin API"
+  termsOfService: "http://swagger.io/terms/"
+  contact:
+    email: "support@kindx.io"
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+host: "kiin.io"
+basePath: "/admin"
+tags:
+  - name: "users"
+    description: "All User operations"
+    externalDocs:
+      description: "Find out more"
+      url: "http://kiin.io/users"
+  - name: "kitchens"
+    description: "All Kitchen Operations"
+    externalDocs:
+      description: "Find out more about our store"
+      url: "http://kiin.io/kitchens"
+  - name: "menus"
+    description: "All Menu operations"
+    externalDocs:
+      description: "Find out more about our store"
+      url: "http://kiin.io/menus"
+  - name: "webhooks"
+    description: "All Web hooks operations"
+    externalDocs:
+      description: "Find out more about our store"
+      url: "http://kiin.io/webhooks"
+schemes:
+  - "https"
+  - "http"
+paths:
+  /kitchens:
+    x-amazon-apigateway-any-method:
+      x-amazon-apigateway-integration:
+        httpMethod: POST
+        type: aws_proxy
+        credentials:
+          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/api-gateway-service-role
+        uri:
+          Fn::Sub: arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AdminKitchenApiRequestProcessor.Arn}/invocations
+  /kitchens/{proxy+}:
+    x-amazon-apigateway-any-method:
+      parameters:
+        - name: "proxy"
+          in: "path"
+      x-amazon-apigateway-integration:
+        httpMethod: POST
+        type: aws_proxy
+        credentials:
+          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/api-gateway-service-role
+        uri:
+          Fn::Sub: arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AdminKitchenApiRequestProcessor.Arn}/invocations

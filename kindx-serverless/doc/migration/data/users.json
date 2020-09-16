@@ -1,0 +1,20 @@
+{
+  "RequestItems": {
+    "users": [
+      {
+        "PutRequest": {
+          "Item": {
+            "user_id": {"S": "USR0"},
+            "locale": {"S": "ENGLISH"},
+            "is_disabled": {"N": "0"},
+            "created_timestamp": {"N": "1530000000" },
+            "last_activity_timestamp": {"N": "1530000000" },
+            "notification_channel": {"S": "WHATSAPP" },
+            "notification_channel_id": {"S": "whatsapp:+37254578768" },
+            "general_food_preferences": {"SS": ["cheese", "piim", "koorene sealihahautis", "chicken schnitsel", "sealiha"] }
+          }
+        }
+      }
+    ]
+  }
+}

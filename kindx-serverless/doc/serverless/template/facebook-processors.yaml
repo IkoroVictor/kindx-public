@@ -1,0 +1,106 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Facebook Processors
+
+Globals:
+  Function:
+    Runtime: java8
+    ReservedConcurrentExecutions: 10
+    Timeout: 20
+    Layers:
+      - arn:aws:lambda:us-east-1:464622532012:layer:Datadog-Node12-x:14
+    AutoPublishAlias: live
+    DeploymentPreference:
+      Type: ${DEPLOYMENT_PREFERENCE}
+    Environment:
+      Variables:
+        DD_FLUSH_TO_LOG: True
+        DD_API_KEY: a08582d1b8c9fd67552f37bb2ef0991a
+        DYNAMODB_SERVICE_URL: !Sub dynamodb.${AWS::Region}.amazonaws.com
+        SQS_SERVICE_URL: !Sub sqs.${AWS::Region}.amazonaws.com
+        ELASTIC_SEARCH_HOSTS: ${ELASTIC_SEARCH_HOSTS}
+        ELASTIC_SEARCH_CREDENTIALS: ${ELASTIC_SEARCH_CREDENTIALS}
+        FACEBOOK_TOKEN: ${FACEBOOK_TOKEN}
+        FACEBOOK_WEBHOOK_VERIFY_TOKEN: ${FACEBOOK_WEBHOOK_VERIFY_TOKEN}
+        GOOGLE_PLACES_API_KEY: ${GOOGLE_PLACES_API_KEY}
+
+  Api:
+    MethodSettings: [{
+      # Turn on Info logging
+      "LoggingLevel": "INFO",
+      # Enable Metrics
+      "MetricsEnabled": True,
+      # Trace-level Logging
+      "DataTraceEnabled": True,
+      # On all Paths & methods
+      "ResourcePath": "/*",
+      "HttpMethod": "*",
+    }]
+
+Resources:
+  FacebookPollEventTrigger:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Publish Facebook Poll events
+      CodeUri: s3://${S3_LAMBDA_BUCKET}/${BUILD_FILE_NAME}
+      Handler: io.kindx.backoffice.handler.schedule.FacebookPollEventScheduleHandler
+      MemorySize: ${LAMBDA_MEM_SIZE}
+      Role: !Sub arn:aws:iam::${AWS::AccountId}:role/lambda-access-role
+      Events:
+        FacebookPollEventSchedule:
+          Type: Schedule
+          Properties:
+            Schedule: rate(6 hours)
+            Name: facebook-poll-event-schedule-${COMMIT_HASH}
+            Description: Facebook Poll Event Schedule
+            Enabled: true
+
+  FacebookPollEventTriggerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${FacebookPollEventTrigger}
+
+
+  FacebookTaggedPostProcessor:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Process Facebook tagged page post
+      CodeUri: s3://${S3_LAMBDA_BUCKET}/${BUILD_FILE_NAME}
+      Handler: io.kindx.backoffice.handler.sqs.FacebookTaggedPostEventHandler
+      MemorySize: ${LAMBDA_MEM_SIZE}
+      Role: !Sub arn:aws:iam::${AWS::AccountId}:role/lambda-access-role
+      Events:
+        FacebookPollEvent:
+          Type: SQS
+          Properties:
+            Queue: !Sub arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:FACEBOOK_TAGGED_POST_EVENTS
+            BatchSize: 1
+            Enabled: true
+
+  FacebookTaggedPostProcessorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${FacebookTaggedPostProcessor}
+
+  FacebookWebhookEventChangeProcessor:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Process Facebook webhook event changes
+      CodeUri: s3://${S3_LAMBDA_BUCKET}/${BUILD_FILE_NAME}
+      Handler: io.kindx.backoffice.handler.sqs.FacebookWebhookChangeEventHandler
+      MemorySize: ${LAMBDA_MEM_SIZE}
+      Role: !Sub arn:aws:iam::${AWS::AccountId}:role/lambda-access-role
+      Events:
+        FacebookPollEvent:
+          Type: SQS
+          Properties:
+            Queue: !Sub arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:FACEBOOK_WEBHOOK_CHANGES.fifo
+            BatchSize: 1
+            Enabled: true
+
+  FacebookWebhookEventChangeProcessorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${FacebookWebhookEventChangeProcessor}
+

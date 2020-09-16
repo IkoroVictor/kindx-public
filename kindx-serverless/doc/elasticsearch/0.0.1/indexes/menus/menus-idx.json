@@ -1,0 +1,52 @@
+{
+
+  "mappings": {
+    "properties": {
+      "location.geoPoint": {"type": "geo_point"},
+      "businessProfile.location.geoPoint": {"type": "geo_point"},
+      "businessProfile.businessName":  {
+        "type": "text",
+        "analyzer": "text_analyzer"
+      },
+      "createdTimestamp":  { "type": "date"  },
+      "menuDate":  { "type": "date"  },
+      "menuId":  { "type": "keyword"  },
+      "menuText" : {
+        "type" :  "text",
+        "search_analyzer": "standard",
+        "analyzer" : "text_analyzer"
+      }
+    }
+  },
+
+  "settings": {
+    "analysis": {
+      "analyzer": {
+        "text_analyzer": {
+          "tokenizer": "ngram_tokenizer",
+          "filter": [
+            "lowercase",
+            "ascii_folding"
+            ]
+        }
+      },
+      "filter" :{
+        "ascii_folding" : {
+          "type" : "asciifolding",
+          "preserve_original" : true
+        }
+      },
+      "tokenizer": {
+        "ngram_tokenizer": {
+          "type": "ngram",
+          "min_gram": 3,
+          "max_gram": 4,
+          "token_chars": [
+            "letter",
+            "digit"
+          ]
+        }
+      }
+    }
+  }
+}

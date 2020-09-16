@@ -1,0 +1,66 @@
+{
+  "RequestItems": {
+    "kitchens": [
+      {
+        "PutRequest": {
+          "Item": {
+            "kitchen_id": {"S": "FB_112134816798002"},
+            "page_url": { "S": "https://facebook.com/112134816798002"},
+            "is_disabled": {"N": "0"},
+            "created_timestamp": {"N": "1530000000"},
+            "last_job_timestamp": {"N": "1530000000"},
+            "updated_timestamp": {"N": "1530000000"}
+          }
+        }
+      },
+      {
+        "PutRequest": {
+          "Item": {
+            "created_timestamp": {
+              "N": "1573375083888"
+            },
+            "is_disabled": {
+              "N": "0"
+            },
+            "kitchen_id": {
+              "S": "FB_100736274726023"
+            },
+            "last_job_timestamp": {
+              "N": "1573512996868"
+            },
+            "page_url": {
+              "S": "http://facebook.com/100736274726023"
+            },
+            "version": {
+              "N": "2294"
+            }
+          }
+        }
+      },
+      {
+        "PutRequest": {
+          "Item": {
+            "created_timestamp": {
+              "N": "1573374939907"
+            },
+            "is_disabled": {
+              "N": "0"
+            },
+            "kitchen_id": {
+              "S": "FB_115449079899568"
+            },
+            "last_job_timestamp": {
+              "N": "1573512996887"
+            },
+            "page_url": {
+              "S": "http://facebook.com/115449079899568"
+            },
+            "version": {
+              "N": "2297"
+            }
+          }
+        }
+      }
+    ]
+  }
+}

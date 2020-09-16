@@ -1,0 +1,5 @@
+rootProject.name = 'kindx-app'
+enableFeaturePreview('IMPROVED_POM_SUPPORT')
+include 'kindx-serverless'
+include 'kindx-cluster-tests'
+

@@ -1,0 +1,52 @@
+{
+  "mappings": {
+    "properties": {
+      "location.geoPoint": {"type": "geo_point"},
+      "businessProfile.location.geoPoint": {"type": "geo_point"},
+      "businessProfile.businessName":  {
+        "type": "text",
+        "analyzer": "text_analyzer"
+      },
+      "createdTimestamp":  { "type": "date"  },
+      "menuDate":  { "type": "date"  },
+      "menuId":  { "type": "keyword"  },
+      "menuText" : {
+        "type" :  "text",
+        "analyzer" : "text_analyzer"
+      }
+    }
+  },
+  "settings": {
+    "analysis": {
+      "filter": {
+        "latvian_stop": {
+          "type":       "stop",
+          "stopwords":  "_latvian_"
+        },
+        "latvian_keywords": {
+          "type":       "keyword_marker",
+          "keywords":   ["piemērs"]
+        },
+        "latvian_stemmer": {
+          "type":       "stemmer",
+          "language":   "latvian"
+        },
+        "ascii_folding" : {
+          "type": "asciifolding"
+        }
+      },
+      "analyzer": {
+        "text_analyzer": {
+          "tokenizer":  "standard",
+          "filter": [
+            "lowercase",
+            "latvian_stop",
+            "latvian_keywords",
+            "latvian_stemmer",
+            "ascii_folding"
+          ]
+        }
+      }
+    }
+  }
+}

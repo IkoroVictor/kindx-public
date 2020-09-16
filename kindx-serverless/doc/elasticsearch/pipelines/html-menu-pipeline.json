@@ -1,0 +1,17 @@
+{
+  "description" : "Parses menu text from html pages",
+  "processors" : [
+    {
+      "html_strip": {
+        "field": "sourceValue",
+        "target_field" : "menuText",
+        "on_failure" : [{
+            "set" : {
+              "field" : "enabled",
+              "value" : "1"
+            }
+        }]
+      }
+    }
+  ]
+}

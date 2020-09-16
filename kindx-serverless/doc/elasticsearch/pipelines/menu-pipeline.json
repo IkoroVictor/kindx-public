@@ -1,0 +1,58 @@
+{
+  "description" : "Sets menu text by language",
+  "processors" : [
+    {
+      "foreach" :  {
+        "field" : "languages",
+        "processor" : {
+          "set": {
+            "field": "menuText-{{_ingest._value}}",
+            "value": "{{menuText}}"
+          }
+        }
+      }
+    }, {
+      "gsub": {
+        "field": "menuText-ee-et",
+        "ignore_missing": true,
+        "pattern": "\\\\n",
+        "replacement": "\n"
+      }
+    }, {
+      "gsub": {
+        "field": "menuText-en-gb",
+        "ignore_missing": true,
+        "pattern": "\\\\n",
+        "replacement": "\n"
+      }
+    }, {
+      "gsub": {
+        "field": "menuText-fi-fi",
+        "ignore_missing": true,
+        "pattern": "\\\\n",
+        "replacement": "\n"
+      }
+    }, {
+      "gsub": {
+        "field": "menuText-lv-lv",
+        "ignore_missing": true,
+        "pattern": "\\\\n",
+        "replacement": "\n"
+      }
+    }, {
+      "gsub": {
+        "field": "menuText-sv-se",
+        "ignore_missing": true,
+        "pattern": "\\\\n",
+        "replacement": "\n"
+      }
+    }, {
+      "gsub": {
+        "field": "menuText-ru-ru",
+        "ignore_missing": true,
+        "pattern": "\\\\n",
+        "replacement": "\n"
+      }
+    }
+  ]
+}

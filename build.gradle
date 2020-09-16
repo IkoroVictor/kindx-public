@@ -1,0 +1,40 @@
+plugins {
+    id 'java'
+}
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+    jcenter()
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+
+allprojects {
+    group 'io.kindx'
+    version '1.0-SNAPSHOT'
+}
+
+subprojects {
+    repositories {
+        mavenCentral()
+        jcenter()
+    }
+
+    apply plugin: 'java'
+    apply plugin: 'idea'
+
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
+
+    ext {
+        JUNIT_VERSION = '4.12'
+    }
+
+    dependencies {
+        testCompile "junit:junit:${JUNIT_VERSION}"
+    }
+}

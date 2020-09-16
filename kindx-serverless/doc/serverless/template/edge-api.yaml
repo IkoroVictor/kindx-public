@@ -1,0 +1,374 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  APIs, Cognito Pools and Roles
+
+Globals:
+  Function:
+    Runtime: java8
+    Layers:
+      - arn:aws:lambda:us-east-1:464622532012:layer:Datadog-Node12-x:14
+    Timeout: 30
+    AutoPublishAlias: live
+    DeploymentPreference:
+      Type: ${DEPLOYMENT_PREFERENCE}
+    Environment:
+      Variables:
+        DD_FLUSH_TO_LOG: True
+        DD_API_KEY: a08582d1b8c9fd67552f37bb2ef0991a
+        DYNAMODB_SERVICE_URL: !Sub dynamodb.${AWS::Region}.amazonaws.com
+        SQS_SERVICE_URL: !Sub sqs.${AWS::Region}.amazonaws.com
+        ELASTIC_SEARCH_HOSTS: ${ELASTIC_SEARCH_HOSTS}
+        ELASTIC_SEARCH_CREDENTIALS: ${ELASTIC_SEARCH_CREDENTIALS}
+        FACEBOOK_TOKEN: ${FACEBOOK_TOKEN}
+        FACEBOOK_WEBHOOK_VERIFY_TOKEN: ${FACEBOOK_WEBHOOK_VERIFY_TOKEN}
+        GOOGLE_PLACES_API_KEY: ${GOOGLE_PLACES_API_KEY}
+  Api:
+    Cors:
+      AllowMethods: "'*'"
+      AllowHeaders: "'*'"
+      AllowOrigin: "'*'"
+    Auth:
+      ApiKeyRequired: false
+    MethodSettings: [{
+       # Turn on Info logging
+       "LoggingLevel": "INFO",
+       # Enable Metrics
+       "MetricsEnabled": True,
+       # Trace-level Logging
+       "DataTraceEnabled": True,
+       # On all Paths & methods
+       "ResourcePath": "/*",
+       "HttpMethod": "*",
+    }]
+
+
+Resources:
+  #========================================Admin API and Processors========================================#
+  AdminApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: AdminApi
+      StageName: ${ENVIRONMENT}
+      EndpointConfiguration: REGIONAL
+      Auth:
+        Authorizers:
+          AdminApiCognitoAuthorizer:
+            UserPoolArn: !GetAtt AdminUserPool.Arn # Can also accept an array
+            Identity:
+              Header: Authorization
+        DefaultAuthorizer: AdminApiCognitoAuthorizer #AdminApiCognitoAuthorizer
+      DefinitionBody:
+        'Fn::Transform':
+          Name: 'AWS::Include'
+          Parameters:
+            Location: s3://${S3_LAMBDA_BUCKET}/api/${ADMIN_API_DEFINITION}
+
+  AdminKitchenApiRequestProcessor:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Admin Kitchen API request processor
+      CodeUri: s3://${S3_LAMBDA_BUCKET}/${BUILD_FILE_NAME}
+      MemorySize: ${LAMBDA_MEM_SIZE}
+      Handler: io.kindx.gateway.handler.admin.AdminKitchenApiRequestHandler
+      Role: !Sub arn:aws:iam::${AWS::AccountId}:role/lambda-access-role
+      Events:
+        KitchenEvent:
+          Type: Api
+          Properties:
+            Path: /kitchens/{proxy+}
+            Method: ANY
+            RestApiId: !Ref AdminApi
+
+  AdminKitchenApiRequestProcessorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${AdminKitchenApiRequestProcessor}
+
+  #========================================Front API and Processors========================================#
+  FrontApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: FrontApi
+      StageName: ${ENVIRONMENT}
+      EndpointConfiguration: REGIONAL
+      Auth:
+        Authorizers:
+          FrontApiCognitoAuthorizer:
+            UserPoolArn: !GetAtt FrontUserPool.Arn
+            AuthorizationScopes:
+              - front-api
+            Identity:
+              Header: Authorization
+              QueryStrings:
+                - token
+        DefaultAuthorizer: AWS_IAM #Using Identity Pools
+        AddDefaultAuthorizerToCorsPreflight: false
+      DefinitionBody:
+        'Fn::Transform':
+          Name: 'AWS::Include'
+          Parameters:
+            Location: s3://${S3_LAMBDA_BUCKET}/api/${API_DEFINITION}
+
+  MenuApiRequestProcessor:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Menu API request processor
+      CodeUri: s3://${S3_LAMBDA_BUCKET}/${BUILD_FILE_NAME}
+      MemorySize: ${LAMBDA_MEM_SIZE}
+      Handler: io.kindx.gateway.handler.MenuApiRequestHandler
+      Role: !Sub arn:aws:iam::${AWS::AccountId}:role/lambda-access-role
+      Events:
+        MenusEvent:
+          Type: Api
+          Properties:
+            Path: /menus/{proxy+}
+            Method: ANY
+            RestApiId: !Ref FrontApi
+        MenusRootEvent:
+          Type: Api
+          Properties:
+            Path: /menus
+            Method: ANY
+            RestApiId: !Ref FrontApi
+
+
+  MenuApiRequestProcessorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${MenuApiRequestProcessor}
+
+  UserApiRequestProcessor:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: User API request processor
+      CodeUri: s3://${S3_LAMBDA_BUCKET}/${BUILD_FILE_NAME}
+      MemorySize: ${LAMBDA_MEM_SIZE}
+      Handler: io.kindx.gateway.handler.UserApiRequestHandler
+      Role: !Sub arn:aws:iam::${AWS::AccountId}:role/lambda-access-role
+      Events:
+        UsersEvent:
+          Type: Api
+          Properties:
+            Path: /users/{proxy+}
+            Method: ANY
+            RestApiId: !Ref FrontApi
+        UsersRootEvent:
+          Type: Api
+          Properties:
+            Path: /users
+            Method: ANY
+            RestApiId: !Ref FrontApi
+
+  UserApiRequestProcessorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${UserApiRequestProcessor}
+
+
+  #========================================Webhooks API and Processors========================================#
+  WebhooksApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: WebhooksApi
+      StageName: ${ENVIRONMENT}
+      EndpointConfiguration: REGIONAL
+      DefinitionBody:
+        'Fn::Transform':
+          Name: 'AWS::Include'
+          Parameters:
+            Location: s3://${S3_LAMBDA_BUCKET}/api/${WEBHOOKS_API_DEFINITION}
+
+  FacebookWebhookRequestProcessor:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Facebook Webhooks request processor
+      CodeUri: s3://${S3_LAMBDA_BUCKET}/${BUILD_FILE_NAME}
+      MemorySize: ${LAMBDA_MEM_SIZE}
+      Handler: io.kindx.gateway.handler.webhook.FacebookWebhookRequestHandler
+      Role: !Sub arn:aws:iam::${AWS::AccountId}:role/lambda-access-role
+      Events:
+        FacebookWebhookEvent:
+          Type: Api
+          Properties:
+            Path: /webhook/facebook
+            Method: ANY
+            RestApiId: !Ref WebhooksApi
+
+
+  FacebookWebhookRequestProcessorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${FacebookWebhookRequestProcessor}
+
+
+
+
+  #========================================Cognito Pools and Roles========================================#
+  # Creates a role that allows Cognito to send SNS messages
+  CognitoSNSRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "cognito-idp.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: "CognitoSNSPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action: "sns:publish"
+                Resource: "*"
+
+  # Creates a user pool in cognito for your app to auth against
+  # This example requires MFA and validates the phone number to use as MFA
+  # Other fields can be added to the schema
+  AdminUserPool:
+    Type: "AWS::Cognito::UserPool"
+    Properties:
+      UserPoolName: admin-user-pool
+      AutoVerifiedAttributes:
+        - phone_number
+      MfaConfiguration: "ON"
+      SmsConfiguration:
+        ExternalId: admin-sms-external
+        SnsCallerArn: !GetAtt CognitoSNSRole.Arn
+      Schema:
+        - Name: name
+          AttributeDataType: String
+          Mutable: true
+          Required: true
+        - Name: email
+          AttributeDataType: String
+          Mutable: false
+          Required: true
+        - Name: phone_number
+          AttributeDataType: String
+          Mutable: false
+          Required: true
+        - Name: slackId
+          AttributeDataType: String
+          Mutable: true
+
+  FrontUserPool:
+    Type: "AWS::Cognito::UserPool"
+    Properties:
+      UserPoolName: front-user-pool
+      AutoVerifiedAttributes:
+        - email
+      MfaConfiguration: "OFF"
+      Schema:
+        - Name: name
+          AttributeDataType: String
+          Mutable: true
+          Required: true
+        - Name: email
+          AttributeDataType: String
+          Mutable: false
+          Required: true
+
+  FrontUserPoolClient:
+    Type: "AWS::Cognito::UserPoolClient"
+    Properties:
+      ClientName: front-user-pool-client
+      GenerateSecret: false
+      UserPoolId: !Ref FrontUserPool
+
+  AdminUserPoolClient:
+    Type: "AWS::Cognito::UserPoolClient"
+    Properties:
+      ClientName: admin-user-pool-client
+      GenerateSecret: false
+      ExplicitAuthFlows:
+        - ALLOW_USER_PASSWORD_AUTH #To be removed after production deployment
+        - ALLOW_USER_SRP_AUTH
+        - ALLOW_REFRESH_TOKEN_AUTH
+      UserPoolId: !Ref AdminUserPool
+
+  # Creates a federated Identity pool (Currently for only front users and guests
+  UsersIdentityPool:
+    Type: "AWS::Cognito::IdentityPool"
+    Properties:
+      IdentityPoolName: users-identity-pool
+      AllowUnauthenticatedIdentities: true
+      CognitoIdentityProviders:
+        - ClientId: !Ref FrontUserPoolClient
+          ProviderName: !GetAtt FrontUserPool.ProviderName
+
+  # Create a role for unauthorized access to AWS resources. Very limited access.
+  GuestUserRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: guest-user-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Federated: "cognito-identity.amazonaws.com"
+            Action:
+              - "sts:AssumeRoleWithWebIdentity"
+            Condition:
+              StringEquals:
+                "cognito-identity.amazonaws.com:aud": !Ref UsersIdentityPool
+              "ForAnyValue:StringLike":
+                "cognito-identity.amazonaws.com:amr": unauthenticated
+      Policies:
+        - PolicyName: "GuestUserPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "mobileanalytics:PutEvents"
+                  - "cognito-sync:*"
+                  - "execute-api:*"
+                Resource: "*"
+
+  AuthenticatedUserRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      RoleName: authenticated-user-role
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Federated: "cognito-identity.amazonaws.com"
+            Action:
+              - "sts:AssumeRoleWithWebIdentity"
+            Condition:
+              StringEquals:
+                "cognito-identity.amazonaws.com:aud": !Ref UsersIdentityPool
+              "ForAnyValue:StringLike":
+                "cognito-identity.amazonaws.com:amr": authenticated
+      Policies:
+        - PolicyName: "CognitoAuthorizedPolicy"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: "Allow"
+                Action:
+                  - "mobileanalytics:PutEvents"
+                  - "cognito-sync:*"
+                  - "cognito-identity:*"
+                  - "execute-api:*"
+                Resource: "*"
+
+  # Assigns the roles to the Identity Pool
+  IdentityPoolRoleMapping:
+    Type: "AWS::Cognito::IdentityPoolRoleAttachment"
+    Properties:
+      IdentityPoolId: !Ref UsersIdentityPool
+      Roles:
+        authenticated: !GetAtt AuthenticatedUserRole.Arn
+        unauthenticated: !GetAtt GuestUserRole.Arn
+
+

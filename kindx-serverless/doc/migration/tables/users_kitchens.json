@@ -1,0 +1,49 @@
+{
+  "TableName": "users_kitchens",
+  "AttributeDefinitions": [
+    {
+      "AttributeName": "kitchen_id",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "user_id",
+      "AttributeType": "S"
+    }
+  ],
+  "KeySchema": [
+    {
+      "AttributeName": "kitchen_id",
+      "KeyType": "HASH"
+    }, {
+      "AttributeName": "user_id",
+      "KeyType": "RANGE"
+    }
+  ],
+  "StreamSpecification": {
+    "StreamEnabled": true,
+    "StreamViewType": "NEW_AND_OLD_IMAGES"
+  },
+  "ProvisionedThroughput": {
+    "WriteCapacityUnits": 25,
+    "ReadCapacityUnits": 25
+  },
+  "GlobalSecondaryIndexes": [
+    {
+      "IndexName": "users_kitchens.user_id.index",
+      "KeySchema": [
+        {
+          "AttributeName": "user_id",
+          "KeyType": "HASH"
+        }
+      ],
+      "Projection": {
+        "NonKeyAttributes": [ "food_preferences" ],
+        "ProjectionType": "INCLUDE"
+      },
+      "ProvisionedThroughput": {
+        "ReadCapacityUnits": 10,
+        "WriteCapacityUnits": 10
+      }
+    }
+  ]
+}

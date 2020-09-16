@@ -1,0 +1,165 @@
+swagger: "2.0"
+info:
+  description: "Kitchen Index Admin API"
+  version: "1.0.0"
+  title: "Kitchen Index Admin API"
+  termsOfService: "http://swagger.io/terms/"
+  contact:
+    email: "support@kiin.io"
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+host: "kiin.io"
+basePath: "/admin"
+tags:
+  - name: "users"
+    description: "All User operations"
+    externalDocs:
+      description: "Find out more"
+      url: "http://kiin.io/users"
+  - name: "kitchens"
+    description: "All Kitchen Operations"
+    externalDocs:
+      description: "Find out more about our store"
+      url: "http://kiin.io/kitchens"
+  - name: "menus"
+    description: "All Menu operations"
+    externalDocs:
+      description: "Find out more about our store"
+      url: "http://kiin.io/menus"
+  - name: "webhooks"
+    description: "All Web hooks operations"
+    externalDocs:
+      description: "Find out more about our store"
+      url: "http://kiin.io/webhooks"
+schemes:
+  - "https"
+  - "http"
+paths:
+  /kitchens/{proxy+}:
+    post:
+      tags:
+        - "kitchens"
+      summary: "Add kitchen"
+      description: ""
+      operationId: "adminKitchenCreate"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: "Kitchen data"
+          required: true
+          schema:
+            $ref: "#/definitions/KitchenCreateRequest"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/Kitchen"
+        400:
+          description: "Invalid request."
+      x-amazon-apigateway-integration:
+        httpMethod: POST
+        type: aws_proxy
+        credentials:
+          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/api-gateway-service-role
+        uri:
+          Fn::Sub: arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AdminKitchenApiRequestProcessor.Arn}/invocations
+  /kitchens/{kitchenId}:
+    patch:
+      tags:
+        - "kitchens"
+      summary: "Update kitchen"
+      description: ""
+      operationId: "adminKitchenUpdate"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      parameters:
+        - in: "body"
+          name: "body"
+          description: "Kitchen update data"
+          required: true
+          schema:
+            $ref: "#/definitions/KitchenUpdateRequest"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/Kitchen"
+        400:
+          description: "Invalid request."
+      x-amazon-apigateway-integration:
+        httpMethod: POST
+        type: aws_proxy
+        credentials:
+          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/api-gateway-service-role
+        uri:
+          Fn::Sub: arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AdminKitchenApiRequestProcessor.Arn}/invocations
+    get:
+      tags:
+        - "kitchens"
+      summary: "get kitchen"
+      description: ""
+      operationId: "adminKitchenGet"
+      consumes:
+        - "application/json"
+      produces:
+        - "application/json"
+      responses:
+        200:
+          description: "successful operation"
+          schema:
+            $ref: "#/definitions/Kitchen"
+        400:
+          description: "Invalid request."
+      x-amazon-apigateway-integration:
+        httpMethod: POST
+        type: aws_proxy
+        credentials:
+          Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/api-gateway-service-role
+        uri:
+          Fn::Sub: arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${AdminKitchenApiRequestProcessor.Arn}/invocations
+
+
+definitions:
+  Kitchen:
+    type: "object"
+    properties:
+      id:
+        type: "string"
+  KitchenCreateRequest:
+    type: "object"
+    properties:
+      fbPageUsername:
+        type: "string"
+      languages:
+        type: array
+      menuExamples:
+        type: array
+      menuSignatureText:
+        type: string
+      lineDelimiter:
+        type: string
+      wordDelimiter:
+        type: string
+  KitchenUpdateRequest:
+    type: "object"
+    properties:
+      languages:
+        type: array
+      menuExamples:
+        type: array
+      menuSignatureText:
+        type: string
+      lineDelimiter:
+        type: string
+      wordDelimiter:
+        type: string
+externalDocs:
+  description: "Find out more about Swagger"
+  url: "http://swagger.io"

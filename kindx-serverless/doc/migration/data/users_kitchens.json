@@ -1,0 +1,88 @@
+{
+  "RequestItems": {
+    "users_kitchens": [
+      {
+        "PutRequest": {
+          "Item": {
+            "user_id": {"S": "USR0"},
+            "kitchen_id": {"S": "FB_112134816798002"},
+            "is_disabled": {"N": "0" },
+            "should_notify": {"N": "1" },
+            "created_timestamp": {"N": "1530000000" },
+            "notification_id": {"S": "TWL00000" },
+            "food_preferences": {"SS": ["salmon", "juustuga",  "cabbage stew"] }
+          }
+        }
+      },
+      {
+        "PutRequest": {
+          "Item": {
+            "created_timestamp": {
+              "N": "1530000000"
+            },
+            "food_preferences": {
+              "SS": [
+                "Fläsktartlette",
+                "Nobelvarmrätten",
+                "avokado",
+                "krusbar",
+                "mushrooms",
+                "salmon"
+              ]
+            },
+            "is_disabled": {
+              "N": "0"
+            },
+            "kitchen_id": {
+              "S": "FB_100736274726023"
+            },
+            "notification_id": {
+              "S": "TWL00000"
+            },
+            "should_notify": {
+              "N": "1"
+            },
+            "user_id": {
+              "S": "USR0"
+            }
+          }
+        }
+      },
+      {
+        "PutRequest": {
+          "Item": {
+            "created_timestamp": {
+              "N": "1530000000"
+            },
+            "food_preferences": {
+              "SS": [
+                "Croustades-kupissa",
+                "Grilled pork",
+                "Tarjoillaan jääpedillä",
+                "Vaaleaa paahtoleipää",
+                "chardonnay",
+                "kylmäsavustettu",
+                "kyttyrälohen"
+              ]
+            },
+            "is_disabled": {
+              "N": "0"
+            },
+            "kitchen_id": {
+              "S": "FB_115449079899568"
+            },
+            "notification_id": {
+              "S": "TWL00000"
+            },
+            "should_notify": {
+              "N": "1"
+            },
+            "user_id": {
+              "S": "USR0"
+            }
+          }
+        }
+      }
+    ]
+  }
+}

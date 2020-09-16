@@ -1,0 +1,62 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  IAM Roles and Account Setup
+
+Resources:
+  LambdaAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: lambda-access-role
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSQSFullAccess
+        - arn:aws:iam::aws:policy/AWSLambdaFullAccess
+        - arn:aws:iam::aws:policy/AmazonKinesisFullAccess
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+
+  ApiGatewayAccessRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: api-gateway-service-role
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Action:
+              - sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service:
+                - apigateway.amazonaws.com
+      Policies:
+        - PolicyDocument:
+            Statement:
+              - Action:
+                  - lambda:InvokeFunction
+                Effect: Allow
+                Resource: !Sub arn:aws:lambda:${AWS::Region}:*:*
+            Version: '2012-10-17'
+          PolicyName: APIGatewayLambdaInvocation
+
+  ApiGatewayAccount:
+    Type: AWS::ApiGateway::Account
+    Properties:
+      CloudWatchRoleArn: !GetAtt ApiGatewayAccessRole.Arn
+
+Outputs:
+  LambdaAccessRoleOutput:
+    Description: "Lambda Access Role ARN"
+    Value: !GetAtt LambdaAccessRole.Arn
+
+  ApiGatewayAccessRoleOutput:
+    Description: "API Gateway Access Role ARN"
+    Value: !GetAtt ApiGatewayAccessRole.Arn

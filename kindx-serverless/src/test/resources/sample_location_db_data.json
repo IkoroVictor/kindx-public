@@ -1,0 +1,32 @@
+{
+  "created_timestamp": {
+    "N": "1580047277652"
+  },
+  "default_languages": {
+    "SS": [
+      "ESTONIAN",
+      "ENGLISH"
+    ]
+  },
+  "is_disabled": {
+    "BOOL": false
+  },
+  "lat": {
+    "N": "59.437515"
+  },
+  "location_id": {
+    "S": "LN_c2e4e5fe9c9f487ea3817584586e550b"
+  },
+  "long": {
+    "N": "24.746583"
+  },
+  "name": {
+    "S": "Tallinn Center"
+  },
+  "radius_reduction_factor": {
+    "N": "2"
+  },
+  "search_radius": {
+    "N": "10000"
+  }
+}

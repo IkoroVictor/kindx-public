@@ -1,0 +1,153 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Core Infrastructure
+
+Globals:
+  Function:
+    Runtime: java8
+    Layers:
+      - arn:aws:lambda:us-east-1:464622532012:layer:Datadog-Node12-x:14
+    Timeout: 30
+    AutoPublishAlias: live
+    DeploymentPreference:
+      Type: ${DEPLOYMENT_PREFERENCE}
+    Environment:
+      Variables:
+        DD_API_KEY: a08582d1b8c9fd67552f37bb2ef0991a
+        DD_FLUSH_TO_LOG: True
+
+
+Resources:
+  JanitorQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      ReceiveMessageWaitTimeSeconds: 10
+      VisibilityTimeout: 60
+      QueueName: JANITOR_EVENTS
+      RedrivePolicy:
+        deadLetterTargetArn: !Sub ${JanitorDLQueue.Arn}
+        maxReceiveCount: 4
+  JanitorDLQueue:
+    Type: AWS::SQS::Queue
+
+  MenuCrawlQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      ReceiveMessageWaitTimeSeconds: 10
+      VisibilityTimeout: 60
+      QueueName: MENU_CRAWL_EVENTS
+      RedrivePolicy:
+        deadLetterTargetArn: !Sub ${MenuCrawlDLQueue.Arn}
+        maxReceiveCount: 4
+  MenuCrawlDLQueue:
+    Type: AWS::SQS::Queue
+
+  UserMenuNotificationQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      VisibilityTimeout: 60
+      ReceiveMessageWaitTimeSeconds: 10
+      QueueName: USER_MENU_NOTIFICATIONS
+      RedrivePolicy:
+        deadLetterTargetArn: !Sub ${UserMenuNotificationDLQueue.Arn}
+        maxReceiveCount: 4
+  UserMenuNotificationDLQueue:
+    Type: AWS::SQS::Queue
+
+  FacebookTaggedPostQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      VisibilityTimeout: 60
+      ReceiveMessageWaitTimeSeconds: 10
+      QueueName: FACEBOOK_TAGGED_POST_EVENTS
+      RedrivePolicy:
+        deadLetterTargetArn: !Sub ${FacebookTaggedPostDLQueue.Arn}
+        maxReceiveCount: 4
+  FacebookTaggedPostDLQueue:
+    Type: AWS::SQS::Queue
+
+  FacebookWebhookChangesQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      FifoQueue: true
+      VisibilityTimeout: 60
+      ReceiveMessageWaitTimeSeconds: 10
+      QueueName: FACEBOOK_WEBHOOK_CHANGES.fifo
+      RedrivePolicy:
+        deadLetterTargetArn: !Sub ${FacebookWebhookChangesDLQueue.Arn}
+        maxReceiveCount: 4
+  FacebookWebhookChangesDLQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      FifoQueue: true
+
+  PlainTextQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      VisibilityTimeout: 60
+      ReceiveMessageWaitTimeSeconds: 10
+      QueueName: PLAIN_TEXT_MENU_EVENTS
+      RedrivePolicy:
+        deadLetterTargetArn: !Sub ${PlainTextDLQueue.Arn}
+        maxReceiveCount: 4
+  PlainTextDLQueue:
+    Type: AWS::SQS::Queue
+
+  PlacesPollQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      VisibilityTimeout: 60
+      ReceiveMessageWaitTimeSeconds: 10
+      QueueName: PLACES_POLL_EVENTS
+      RedrivePolicy:
+        deadLetterTargetArn: !Sub ${PlacesPollDLQueue.Arn}
+        maxReceiveCount: 4
+  PlacesPollDLQueue:
+    Type: AWS::SQS::Queue
+
+  PreferenceReprocessQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      VisibilityTimeout: 60
+      ReceiveMessageWaitTimeSeconds: 10
+      QueueName: PREFERENCE_REPROCESS_EVENTS
+      RedrivePolicy:
+        deadLetterTargetArn: !Sub ${PreferencesReprocessDLQueue.Arn}
+        maxReceiveCount: 4
+  PreferencesReprocessDLQueue:
+    Type: AWS::SQS::Queue
+
+  PlacesToKitchenQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      VisibilityTimeout: 60
+      ReceiveMessageWaitTimeSeconds: 10
+      QueueName: PLACES_TO_KITCHEN
+      RedrivePolicy:
+        deadLetterTargetArn: !Sub ${PlacesToKitchenDLQueue.Arn}
+        maxReceiveCount: 3
+  PlacesToKitchenDLQueue:
+    Type: AWS::SQS::Queue
+
+  UsageEventStream:
+    Type: AWS::Kinesis::Stream
+    Properties:
+      Name: USAGE_EVENTS_STREAM
+      ShardCount: 1
+
+  PreferencesEventStream:
+    Type: AWS::Kinesis::Stream
+    Properties:
+      Name: PREFERENCES_EVENTS_STREAM
+      ShardCount: 1
+
+  ReadabilityS3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: kindx-readable-html-files
+      LifecycleConfiguration:
+        Rules:
+        - ExpirationInDays: 1
+          Status: Enabled
+

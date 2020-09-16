@@ -1,0 +1,585 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  DynamoDB Table Schemas and Core Processors
+
+Globals:
+  Function:
+    Runtime: java8
+    ReservedConcurrentExecutions: 10
+    Layers:
+      - arn:aws:lambda:us-east-1:464622532012:layer:Datadog-Node12-x:14
+    Timeout: 30
+    AutoPublishAlias: live
+    DeploymentPreference:
+      Type: ${DEPLOYMENT_PREFERENCE}
+    Environment:
+      Variables:
+        DD_FLUSH_TO_LOG: True
+        DD_API_KEY: a08582d1b8c9fd67552f37bb2ef0991a
+        READABILITY_BUCKET: kindx-readable-html-files
+        DYNAMODB_SERVICE_URL: !Sub dynamodb.${AWS::Region}.amazonaws.com
+        SQS_SERVICE_URL: !Sub sqs.${AWS::Region}.amazonaws.com
+        ELASTIC_SEARCH_HOSTS: ${ELASTIC_SEARCH_HOSTS}
+        ELASTIC_SEARCH_CREDENTIALS: ${ELASTIC_SEARCH_CREDENTIALS}
+        FACEBOOK_TOKEN: ${FACEBOOK_TOKEN}
+        FACEBOOK_WEBHOOK_VERIFY_TOKEN: ${FACEBOOK_WEBHOOK_VERIFY_TOKEN}
+        GOOGLE_PLACES_API_KEY: ${GOOGLE_PLACES_API_KEY}
+  Api:
+    MethodSettings: [{
+      # Turn on Info logging
+      "LoggingLevel": "INFO",
+      # Enable Metrics
+      "MetricsEnabled": True,
+      # Trace-level Logging
+      "DataTraceEnabled": True,
+      # On all Paths & methods
+      "ResourcePath": "/*",
+      "HttpMethod": "*",
+    }]
+
+Resources:
+  #==========================Core Processors==========================#
+  CrawlEventTrigger:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Publish Menu crawl events
+      CodeUri: s3://${S3_LAMBDA_BUCKET}/${BUILD_FILE_NAME}
+      Handler: io.kindx.backoffice.handler.schedule.CrawlEventScheduleHandler
+      MemorySize: ${LAMBDA_MEM_SIZE}
+      Role: !Sub arn:aws:iam::${AWS::AccountId}:role/lambda-access-role
+      Events:
+        CrawlEventSchedule:
+          Type: Schedule
+          Properties:
+            Schedule: rate(7 days)
+            Name: crawl-event-schedule-${COMMIT_HASH}
+            Description: Crawl Event Schedule
+            Enabled: true
+
+  CrawlEventTriggerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${CrawlEventTrigger}
+
+  CanvasLib64Layer:
+    Type: AWS::Lambda::LayerVersion
+    Properties:
+      CompatibleRuntimes:
+        - nodejs12.x
+        - nodejs10.x
+      Content:
+        S3Bucket: ${S3_LAMBDA_BUCKET}
+        S3Key: layers/canvas-lib64-layer.zip
+      Description: canvas-lib64 layer
+      LayerName: canvas-lib64-layer
+
+  ReadabilityProcessor:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Process webpages to readable html
+      CodeUri: s3://${S3_LAMBDA_BUCKET}/${NODE_BUILD_FILE_NAME}
+      Handler: index.handler
+      Runtime: nodejs12.x
+      MemorySize: ${LAMBDA_MEM_SIZE}
+      Layers:
+        - !Ref CanvasLib64Layer
+      Role: !Sub arn:aws:iam::${AWS::AccountId}:role/lambda-access-role
+
+  ReadabilityProcessorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${ReadabilityProcessor}
+
+
+  CrawlEventProcessor:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Process Menu crawl events
+      CodeUri: s3://${S3_LAMBDA_BUCKET}/${BUILD_FILE_NAME}
+      Handler: io.kindx.backoffice.handler.sqs.CrawlEventProcessorHandler
+      MemorySize: ${LAMBDA_MEM_SIZE}
+      Role: !Sub arn:aws:iam::${AWS::AccountId}:role/lambda-access-role
+      Environment:
+        Variables:
+          READABILITY_PROCESSOR_ARN: !Ref ReadabilityProcessor
+      Events:
+        CrawlEvent:
+          Type: SQS
+          Properties:
+            Queue: !Sub arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:MENU_CRAWL_EVENTS
+            BatchSize: 1
+            Enabled: true
+
+  CrawlEventProcessorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${CrawlEventProcessor}
+
+
+  JanitorEventProcessor:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Process Janitor events
+      CodeUri: s3://${S3_LAMBDA_BUCKET}/${BUILD_FILE_NAME}
+      Handler: io.kindx.backoffice.handler.sqs.JanitorEventHandler
+      MemorySize: ${LAMBDA_MEM_SIZE}
+      Role: !Sub arn:aws:iam::${AWS::AccountId}:role/lambda-access-role
+      Events:
+        CrawlEvent:
+          Type: SQS
+          Properties:
+            Queue: !Sub arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:JANITOR_EVENTS
+            BatchSize: 1
+            Enabled: true
+
+  JanitorEventProcessorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${JanitorEventProcessor}
+
+  PlainTextEventProcessor:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Process Plain Text Menu events
+      CodeUri: s3://${S3_LAMBDA_BUCKET}/${BUILD_FILE_NAME}
+      Handler: io.kindx.backoffice.handler.sqs.PlainTextEventMenuHandler
+      MemorySize: ${LAMBDA_MEM_SIZE}
+      Role: !Sub arn:aws:iam::${AWS::AccountId}:role/lambda-access-role
+      Events:
+        CrawlEvent:
+          Type: SQS
+          Properties:
+            Queue: !Sub arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:PLAIN_TEXT_MENU_EVENTS
+            BatchSize: 1
+            Enabled: true
+
+  PlainTextEventProcessorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${PlainTextEventProcessor}
+
+  PreferenceReprocessEventProcessor:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Reprocess user preferences when menu or user change events
+      CodeUri: s3://${S3_LAMBDA_BUCKET}/${BUILD_FILE_NAME}
+      Handler: io.kindx.backoffice.handler.sqs.PreferenceReprocessEventHandler
+      MemorySize: ${LAMBDA_MEM_SIZE}
+      Role: !Sub arn:aws:iam::${AWS::AccountId}:role/lambda-access-role
+      Events:
+        PreferenceReprocessEvent:
+          Type: SQS
+          Properties:
+            Queue: !Sub arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:PREFERENCE_REPROCESS_EVENTS
+            BatchSize: 1
+            Enabled: true
+
+  PreferenceReprocessEventProcessorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${PreferenceReprocessEventProcessor}
+
+
+  FoodItemAggregator:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Aggregates food items count
+      CodeUri: s3://${S3_LAMBDA_BUCKET}/${BUILD_FILE_NAME}
+      Handler: io.kindx.backoffice.handler.dynamo.FoodItemAggregationHandler
+      MemorySize: ${LAMBDA_MEM_SIZE}
+      Role: !Sub arn:aws:iam::${AWS::AccountId}:role/lambda-access-role
+      Events:
+        FoodItemUpdateEvent:
+          Type: DynamoDB
+          Properties:
+            Stream: !GetAtt MenuFoodItemsTable.StreamArn
+            StartingPosition: TRIM_HORIZON
+            BatchSize: ${FOOD_ITEM_AGGREGATOR_BATCH_SIZE}
+            Enabled: true
+
+  FoodItemAggregatorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${FoodItemAggregator}
+
+  UserNotificationProcessor:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: User Notification Processor
+      CodeUri: s3://${S3_LAMBDA_BUCKET}/${BUILD_FILE_NAME}
+      Handler: io.kindx.backoffice.handler.sqs.UserMenuNotificationHandler
+      MemorySize: ${LAMBDA_MEM_SIZE}
+      Role: !Sub arn:aws:iam::${AWS::AccountId}:role/lambda-access-role
+      Events:
+        MenuPostEvent:
+          Type: SQS
+          Properties:
+            Queue: !Sub arn:aws:sqs:${AWS::Region}:${AWS::AccountId}:USER_MENU_NOTIFICATIONS
+            BatchSize: ${NOTIFICATION_QUEUE_BATCH_SIZE}
+            Enabled: true
+
+  UserNotificationProcessorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${UserNotificationProcessor}
+
+  UsageEventStreamProcessor:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Process Usage event stream records
+      CodeUri: s3://${S3_LAMBDA_BUCKET}/${BUILD_FILE_NAME}
+      Handler: io.kindx.backoffice.handler.streams.UsageEventStreamHandler
+      MemorySize: ${LAMBDA_MEM_SIZE}
+      Role: !Sub arn:aws:iam::${AWS::AccountId}:role/lambda-access-role
+      Events:
+        UsageStreamEvent:
+          Type: Kinesis
+          Properties:
+            Stream: !Sub arn:aws:kinesis:${AWS::Region}:${AWS::AccountId}:stream/USAGE_EVENTS_STREAM
+            StartingPosition: TRIM_HORIZON
+            BatchSize: 10
+            MaximumBatchingWindowInSeconds: 20
+            Enabled: true
+            ParallelizationFactor: 2
+            MaximumRetryAttempts: 10
+            BisectBatchOnFunctionError: true
+            MaximumRecordAgeInSeconds: 604800
+
+  UsageEventStreamProcessorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${UsageEventStreamProcessor}
+
+
+  PreferencesEventStreamProcessor:
+    Type: AWS::Serverless::Function
+    Properties:
+      Description: Process Preferences event stream records
+      CodeUri: s3://${S3_LAMBDA_BUCKET}/${BUILD_FILE_NAME}
+      Handler: io.kindx.backoffice.handler.streams.PreferencesEventStreamHandler
+      MemorySize: ${LAMBDA_MEM_SIZE}
+      Role: !Sub arn:aws:iam::${AWS::AccountId}:role/lambda-access-role
+      Events:
+        PreferencesEvent:
+          Type: Kinesis
+          Properties:
+            Stream: !Sub arn:aws:kinesis:${AWS::Region}:${AWS::AccountId}:stream/PREFERENCES_EVENTS_STREAM
+            StartingPosition: TRIM_HORIZON
+            BatchSize: 100
+            MaximumBatchingWindowInSeconds: 20
+            Enabled: true
+            ParallelizationFactor: 2
+            MaximumRetryAttempts: 10
+            BisectBatchOnFunctionError: true
+            MaximumRecordAgeInSeconds: 604800
+
+  PreferencesEventStreamProcessorLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${PreferencesEventStreamProcessor}
+
+ #==========================Tables==========================#
+
+  MenusTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: menus
+      AttributeDefinitions:
+        - AttributeName: kitchen_id
+          AttributeType: S
+        - AttributeName: menu_id
+          AttributeType: S
+        - AttributeName: menu_configuration_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: kitchen_id
+          KeyType: HASH
+        - AttributeName: menu_id
+          KeyType: RANGE
+      GlobalSecondaryIndexes:
+        - IndexName: menus.menu_configuration_id.index
+          KeySchema:
+            - AttributeName: menu_configuration_id
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 3
+            WriteCapacityUnits: 3
+      ProvisionedThroughput:
+        WriteCapacityUnits: 3
+        ReadCapacityUnits: 3
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+
+  KitchensTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: kitchens
+      AttributeDefinitions:
+        - AttributeName: kitchen_id
+          AttributeType: S
+        - AttributeName: facebook_id
+          AttributeType: S
+        - AttributeName: google_places_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: kitchen_id
+          KeyType: HASH
+      ProvisionedThroughput:
+        WriteCapacityUnits: 3
+        ReadCapacityUnits: 3
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      GlobalSecondaryIndexes:
+        - IndexName: kitchens.facebook_id.index
+          KeySchema:
+            - AttributeName: facebook_id
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 3
+            WriteCapacityUnits: 3
+        - IndexName: kitchens.google_places_id.index
+          KeySchema:
+            - AttributeName: google_places_id
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 3
+            WriteCapacityUnits: 3
+
+  KitchenConfigurationsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: kitchen_configurations
+      AttributeDefinitions:
+        - AttributeName: kitchen_id
+          AttributeType: S
+        - AttributeName: created_timestamp
+          AttributeType: N
+      KeySchema:
+        - AttributeName: kitchen_id
+          KeyType: HASH
+        - AttributeName: created_timestamp
+          KeyType: RANGE
+      ProvisionedThroughput:
+        WriteCapacityUnits: 3
+        ReadCapacityUnits: 3
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+
+  MenuConfigurationsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: menu_configurations
+      AttributeDefinitions:
+        - AttributeName: kitchen_id
+          AttributeType: S
+        - AttributeName: id
+          AttributeType: S
+        - AttributeName: type
+          AttributeType: S
+      KeySchema:
+        - AttributeName: kitchen_id
+          KeyType: HASH
+        - AttributeName: id
+          KeyType: RANGE
+      ProvisionedThroughput:
+        WriteCapacityUnits: 5
+        ReadCapacityUnits: 5
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      GlobalSecondaryIndexes:
+        - IndexName: menu_configurations.type.index
+          KeySchema:
+            - AttributeName: type
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
+          ProvisionedThroughput:
+            ReadCapacityUnits: 3
+            WriteCapacityUnits: 3
+
+
+  UsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: users
+      AttributeDefinitions:
+        - AttributeName: user_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: user_id
+          KeyType: HASH
+      ProvisionedThroughput:
+        WriteCapacityUnits: 3
+        ReadCapacityUnits: 3
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+
+  UsersKitchensTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: users_kitchens
+      AttributeDefinitions:
+        - AttributeName: kitchen_id
+          AttributeType: S
+        - AttributeName: user_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: kitchen_id
+          KeyType: HASH
+        - AttributeName: user_id
+          KeyType: RANGE
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      ProvisionedThroughput:
+        WriteCapacityUnits: 3
+        ReadCapacityUnits: 3
+      GlobalSecondaryIndexes:
+        - IndexName: users_kitchens.user_id.index
+          KeySchema:
+            - AttributeName: user_id
+              KeyType: HASH
+          Projection:
+            NonKeyAttributes:
+              - food_preferences
+            ProjectionType: INCLUDE
+          ProvisionedThroughput:
+            ReadCapacityUnits: 3
+            WriteCapacityUnits: 3
+
+  UsersNotificationsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: users_notifications
+      AttributeDefinitions:
+        - AttributeName: user_id
+          AttributeType: S
+        - AttributeName: kitchen_menu_id
+          AttributeType: S
+      ProvisionedThroughput:
+        WriteCapacityUnits: 3
+        ReadCapacityUnits: 3
+      KeySchema:
+        - AttributeName: user_id
+          KeyType: HASH
+        - AttributeName: kitchen_menu_id
+          KeyType: RANGE
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+
+
+  MenuFoodItemsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: menu_food_items
+      AttributeDefinitions:
+        - AttributeName: menu_id
+          AttributeType: S
+        - AttributeName: user_id
+          AttributeType: S
+        - AttributeName: kitchen_id
+          AttributeType: S
+        - AttributeName: user_id_name
+          AttributeType: S
+      KeySchema:
+        - AttributeName: menu_id
+          KeyType: HASH
+        - AttributeName: user_id_name
+          KeyType: RANGE
+      StreamSpecification:
+        StreamViewType: NEW_IMAGE
+      ProvisionedThroughput:
+        WriteCapacityUnits: 3
+        ReadCapacityUnits: 3
+      GlobalSecondaryIndexes:
+        - IndexName: menu_food_items.user_id-menu_id-system_name.index
+          KeySchema:
+            - AttributeName: user_id
+              KeyType: HASH
+            - AttributeName: menu_id
+              KeyType: RANGE
+          Projection:
+            NonKeyAttributes:
+              - system_name
+            ProjectionType: INCLUDE
+          ProvisionedThroughput:
+            ReadCapacityUnits: 3
+            WriteCapacityUnits: 3
+        - IndexName: menu_food_items.user_id-kitchen_id-user_id_name.index
+          KeySchema:
+            - AttributeName: user_id
+              KeyType: HASH
+            - AttributeName: kitchen_id
+              KeyType: RANGE
+          Projection:
+            NonKeyAttributes:
+              - user_id_name
+            ProjectionType: INCLUDE
+          ProvisionedThroughput:
+            ReadCapacityUnits: 1
+            WriteCapacityUnits: 1
+
+
+
+  FoodItemsAggregationsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: food_items_aggregations
+      AttributeDefinitions:
+        - AttributeName: menu_id
+          AttributeType: S
+        - AttributeName: system_name
+          AttributeType: S
+      KeySchema:
+        - AttributeName: menu_id
+          KeyType: HASH
+        - AttributeName: system_name
+          KeyType: RANGE
+      ProvisionedThroughput:
+        WriteCapacityUnits: 3
+        ReadCapacityUnits: 3
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+
+  LocationsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: locations
+      AttributeDefinitions:
+        - AttributeName: location_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: location_id
+          KeyType: HASH
+      ProvisionedThroughput:
+        WriteCapacityUnits: 3
+        ReadCapacityUnits: 3
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+
+  PlacesCacheTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: google_places_cache
+      AttributeDefinitions:
+        - AttributeName: places_id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: places_id
+          KeyType: HASH
+      ProvisionedThroughput:
+        WriteCapacityUnits: 3
+        ReadCapacityUnits: 3
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+
+
+
+
+

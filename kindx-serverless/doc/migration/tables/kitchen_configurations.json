@@ -1,0 +1,30 @@
+{
+  "TableName": "kitchen_configurations",
+  "AttributeDefinitions": [
+    {
+      "AttributeName": "kitchen_id",
+      "AttributeType": "S"
+    },
+    {
+      "AttributeName": "created_timestamp",
+      "AttributeType": "N"
+    }
+  ],
+  "KeySchema": [
+    {
+      "AttributeName": "kitchen_id",
+      "KeyType": "HASH"
+    }, {
+      "AttributeName": "created_timestamp",
+      "KeyType": "RANGE"
+    }
+  ],
+  "ProvisionedThroughput": {
+    "WriteCapacityUnits": 25,
+    "ReadCapacityUnits": 25
+  },
+  "StreamSpecification": {
+    "StreamEnabled": true,
+    "StreamViewType": "NEW_AND_OLD_IMAGES"
+  }
+}

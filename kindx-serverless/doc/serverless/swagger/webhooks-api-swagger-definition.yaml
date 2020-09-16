@@ -1,0 +1,35 @@
+swagger: "2.0"
+info:
+  description: "Kitchen Index Webhooks API"
+  version: "1.0.0"
+  title: "Kitchen Index Webhooks API"
+  termsOfService: "http://swagger.io/terms/"
+  contact:
+    email: "support@kindx.io"
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0.html"
+host: "kiin.io"
+basePath: "/front"
+tags:
+  - name: "webhooks"
+    description: "All Web hooks operations"
+    externalDocs:
+      description: "Find out more about our store"
+      url: "http://kindx.io/webhooks"
+schemes:
+  - "https"
+  - "http"
+paths:
+  /webhooks/facebook:
+    x-amazon-apigateway-any-method:
+      x-amazon-apigateway-integration:
+          httpMethod: POST
+          type: aws_proxy
+          credentials:
+            Fn::Sub: arn:aws:iam::${AWS::AccountId}:role/api-gateway-service-role
+          uri:
+            Fn::Sub: arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${FacebookWebhookRequestProcessor.Arn}/invocations
+externalDocs:
+  description: "Find out more about Swagger"
+  url: "http://swagger.io"

@@ -1,0 +1,116 @@
+{
+  "Records": [
+    {
+      "eventID": "2",
+      "eventName": "MODIFY",
+      "eventVersion": "1.0",
+      "eventSource": "aws:dynamodb",
+      "awsRegion": "{region}",
+      "dynamodb": {
+        "Keys": {
+          "Id": {
+            "N": "1"
+          }
+        },
+        "NewImage": {
+          "created_timestamp": {
+            "N": "1565206111604"
+          },
+          "kitchen_id": {
+            "S": "FB_112134816798002"
+          },
+          "is_disabled": {
+            "N": "0"
+          },
+          "last_job_timestamp": {
+            "N": "1566045128500"
+          },
+          "location": {
+            "M": {
+              "lat": {
+                "N": "0.000001"
+              },
+              "long": {
+                "N": "1"
+              }
+            }
+          },
+          "name": {
+            "S": "Tallinn Kitchen"
+          },
+          "updated_timestamp": {
+            "N": "1565206179948"
+          }
+        },
+        "OldImage": {
+          "business_profile": {
+            "M": {
+              "address": {
+                "S": "Nafta  55, Tallinn, Estonia"
+              },
+              "business_name": {
+                "S": "Tallinn Kitchen Inc."
+              },
+              "email": {
+                "S": "tallinn.kitchen@gmail.com"
+              },
+              "opening_hours": {
+                "L": []
+              },
+              "phone": {
+                "SS": [
+                  "+37254000000",
+                  "+37254000001"
+                ]
+              },
+              "website": {
+                "S": "https://tallinn.kitchen"
+              }
+            }
+          },
+          "created_timestamp": {
+            "N": "1565206111604"
+          },
+          "fb_page_id": {
+            "S": "tallinn.kitchen.demo"
+          },
+          "fb_page_url": {
+            "S": "https://www.facebook.com/tallinn.kitchen.demo/"
+          },
+          "geo_hash": {
+            "S": "-800088080800080"
+          },
+          "id": {
+            "S": "1"
+          },
+          "is_disabled": {
+            "N": "0"
+          },
+          "last_job_timestamp": {
+            "N": "1566045128335"
+          },
+          "location": {
+            "M": {
+              "lat": {
+                "N": "0.000001"
+              },
+              "long": {
+                "N": "1"
+              }
+            }
+          },
+          "name": {
+            "S": "Tallinn Kitchen"
+          },
+          "updated_timestamp": {
+            "N": "1565206179948"
+          }
+        },
+        "SequenceNumber": "222",
+        "SizeBytes": 59,
+        "StreamViewType": "NEW_AND_OLD_IMAGES"
+      },
+      "eventSourceARN": "arn:aws:dynamodb:us-east-1:431892529619:table/kitchens/stream/2019-08-07T19:40:39.101"
+    }
+  ]
+}

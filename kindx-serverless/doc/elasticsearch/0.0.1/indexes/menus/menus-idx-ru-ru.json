@@ -1,0 +1,48 @@
+{
+  "mappings": {
+    "properties": {
+      "location.geoPoint": {"type": "geo_point"},
+      "businessProfile.location.geoPoint": {"type": "geo_point"},
+      "businessProfile.businessName":  {
+        "type": "text",
+        "analyzer": "text_analyzer"
+      },
+      "createdTimestamp":  { "type": "date"  },
+      "menuDate":  { "type": "date"  },
+      "menuId":  { "type": "keyword"  },
+      "menuText" : {
+        "type" :  "text",
+        "analyzer" : "text_analyzer"
+      }
+    }
+  },
+  "settings": {
+    "analysis": {
+      "filter": {
+        "russian_stop": {
+          "type":       "stop",
+          "stopwords":  "_russian_"
+        },
+        "russian_keywords": {
+          "type":       "keyword_marker",
+          "keywords":   ["пример"]
+        },
+        "russian_stemmer": {
+          "type":       "stemmer",
+          "language":   "russian"
+        }
+      },
+      "analyzer": {
+        "text_analyzer": {
+          "tokenizer":  "standard",
+          "filter": [
+            "lowercase",
+            "russian_stop",
+            "russian_keywords",
+            "russian_stemmer"
+          ]
+        }
+      }
+    }
+  }
+}

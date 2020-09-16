@@ -1,0 +1,52 @@
+{
+  "TableName": "menus",
+  "AttributeDefinitions": [
+    {
+      "AttributeName": "kitchen_id",
+      "AttributeType": "S"
+    }, {
+      "AttributeName": "menu_id",
+      "AttributeType": "S"
+    }, {
+      "AttributeName": "menu_configuration_id",
+      "AttributeType": "S"
+    }
+  ],
+  "KeySchema": [
+    {
+      "AttributeName": "kitchen_id",
+      "KeyType": "HASH"
+    }, {
+      "AttributeName": "menu_id",
+      "KeyType": "RANGE"
+    }
+  ],
+
+  "GlobalSecondaryIndexes": [
+    {
+      "IndexName": "menus.menu_configuration_id.index",
+      "KeySchema": [
+        {
+          "AttributeName": "menu_configuration_id",
+          "KeyType": "HASH"
+        }
+      ],
+      "Projection": {
+        "ProjectionType": "ALL"
+      },
+      "ProvisionedThroughput": {
+        "ReadCapacityUnits": 10,
+        "WriteCapacityUnits": 10
+      }
+    }
+  ],
+
+  "ProvisionedThroughput": {
+    "WriteCapacityUnits": 25,
+    "ReadCapacityUnits": 25
+  },
+  "StreamSpecification": {
+    "StreamEnabled": true,
+    "StreamViewType": "NEW_AND_OLD_IMAGES"
+  }
+}

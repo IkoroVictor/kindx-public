@@ -1,0 +1,100 @@
+plugins {
+    id 'java'
+}
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+    maven { url 'https://jitpack.io' }
+    maven { url 'https://dl.bintray.com/collectivemedia/releases' }
+    maven { url 'http://dynamodb-local.s3-website-us-west-2.amazonaws.com/release' }
+}
+
+dependencies {
+
+    implementation platform('com.amazonaws:aws-java-sdk-bom:1.11.658')
+    implementation (
+            'org.apache.logging.log4j:log4j-api:2.12.1',
+            'org.apache.logging.log4j:log4j-core:2.12.1',
+            'org.apache.logging.log4j:log4j-1.2-api:2.12.1',
+    )
+    implementation (
+            'com.amazonaws:aws-lambda-java-core:1.2.0',
+            'com.amazonaws:aws-lambda-java-events:2.2.6'
+    )
+    implementation 'org.apache.commons:commons-lang3:3.9'
+    implementation 'org.apache.commons:commons-text:1.8'
+    implementation 'org.apache.tika:tika-parsers:1.23'
+    implementation 'commons-io:commons-io:2.6'
+    implementation 'com.google.common.geometry:s2-geometry:1.0'
+    implementation 'org.codehaus.jackson:jackson-mapper-asl:1.9.13'
+    implementation 'org.freemarker:freemarker:2.3.29'
+
+    implementation 'com.twilio.sdk:twilio:7.42.0'
+    implementation 'org.bigtesting:routd:1.0.7'
+
+    implementation 'com.amazonaws:aws-java-sdk-dynamodb'
+    implementation 'com.amazonaws:aws-java-sdk-sqs'
+    implementation 'com.amazonaws:aws-java-sdk-kinesis'
+    implementation 'com.amazonaws:aws-java-sdk-lambda'
+    implementation 'com.amazonaws:aws-lambda-java-log4j2:1.0.0'
+
+    implementation 'io.github.openfeign:feign-core:10.3.0'
+    implementation 'io.github.openfeign:feign-jackson:10.3.0'
+
+
+    implementation 'com.googlecode.concurrent-trees:concurrent-trees:2.6.1'
+    implementation 'com.google.maps:google-maps-services:0.10.2'
+    implementation 'com.google.inject:guice:4.2.2'
+
+
+    implementation 'org.elasticsearch.client:elasticsearch-rest-high-level-client:7.4.0'
+
+
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.9.9'
+    implementation 'org.hibernate.validator:hibernate-validator:6.1.0.Final'
+    implementation 'org.glassfish:javax.el:3.0.1-b09'
+
+    implementation 'org.seleniumhq.selenium:selenium-java:3.141.59'
+    implementation 'org.seleniumhq.selenium:selenium-remote-driver:3.141.59'
+    implementation 'com.google.guava:guava:28.1-jre'
+
+    implementation 'io.rest-assured:rest-assured:4.1.2'
+    implementation 'io.github.resilience4j:resilience4j-all:1.2.0'
+
+    compileOnly 'org.projectlombok:lombok:1.18.8'
+    annotationProcessor 'org.projectlombok:lombok:1.18.8'
+
+
+    testImplementation "junit:junit:4.12"
+    testImplementation 'com.github.stefanbirkner:system-rules:1.19.0'
+
+    testCompile 'com.amazonaws:DynamoDBLocal:1.11.477'
+}
+
+task buildZip(type: Zip) {
+    from compileJava
+    from processResources
+    into('lib') {
+        from configurations.runtimeClasspath
+    }
+}
+
+
+build.dependsOn buildZip
+
+
+task copyNativeDeps(type: Copy) {
+    from (configurations.testCompile) {
+        include "*.dylib"
+        include "*.so"
+        include "*.dll"
+    }
+    into 'build/libs'
+}
+
+test.dependsOn copyNativeDeps
+test.doFirst {
+    systemProperty "java.library.path", 'build/libs'
+}

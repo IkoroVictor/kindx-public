@@ -1,0 +1,9 @@
+{
+  "mappings": {
+    "properties": {
+      "createdTimestamp": {
+        "type": "date"
+      }
+    }
+  }
+}

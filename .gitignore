@@ -1,0 +1,9 @@
+**/.gradle
+kindx-serverless/generated/
+**/target/
+**/build/
+*.iml
+.idea/
+gradle/
+**/src/main/.aws-sam/
+**/node_modules
